@@ -21,3 +21,12 @@ class Komentarz(models.Model):
 
     def __str__(self):
         return self.tresc
+
+    def save(self,*args, **kwargs):
+        if self.rodzic:
+            if self.rodzic.post == self.post:
+                super(Komentarz,self).save(*args, **kwargs)
+            else:
+                return False
+        else:
+            super(Komentarz, self).save(*args, **kwargs)
