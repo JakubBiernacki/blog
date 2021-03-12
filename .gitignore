@@ -14,3 +14,9 @@ api/__pycache__/admin.cpython-39.pyc
 api/__pycache__/apps.cpython-39.pyc
 api/__pycache__/models.cpython-39.pyc
 api/__pycache__/urls.cpython-39.pyc
+.idea/.gitignore
+.idea/blog.iml
+.idea/misc.xml
+.idea/modules.xml
+.idea/vcs.xml
+.idea/inspectionProfiles/profiles_settings.xml
