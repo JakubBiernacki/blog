@@ -3,3 +3,5 @@ frontend/__pycache__/
 blog/__pycache__/
 api/__pycache__/
 .idea/
+api/migrations/__pycache__/
+frontend/migrations/__pycache__/
