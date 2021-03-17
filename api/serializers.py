@@ -16,30 +16,30 @@ class KomentarzSerializer(serializers.ModelSerializer):
 class ProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = Profile
-        fields = ['image']
-        # depth = 1
+        fields = ('image',)
+
+
+    def update(self, instance, validated_data):
+        instance.image = validated_data.get('image', instance.image)
+        instance.save()
+        return instance
+
 
 
 class UserSerializer(serializers.ModelSerializer):
 
-    image = serializers.ImageField(source='profile.image',required=False)
 
+    image = serializers.SerializerMethodField()
     class Meta:
         model = User
         fields = ['id', 'username','email','first_name','last_name','image']
 
 
+    def get_image(self, object):
 
+        image = object.profile.image.url if object.profile.image else None
 
-    # def get_image(self, object):
-    #     request = self.context.get('request')
-    #     return request.build_absolute_uri(object.profile.image.url)
-
-    # def save(self,instance, validated_data):
-    #     instance.profile.image = self.validated_data.get('image',instance.image)
-    #     super(UserSerializer, self).save(instance, validated_data)
-
-
+        return image
 
 
 

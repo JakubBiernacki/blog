@@ -1,24 +1,23 @@
-from django.shortcuts import render,get_object_or_404
-
+from django.shortcuts import get_object_or_404
 #API
-from rest_framework import viewsets,mixins
 
 from .models import Post,Komentarz
 from django.contrib.auth.models import User
-from .serializers import PostSerializer,KomentarzSerializer,UserSerializer,RegistrationSerializer,LoginSerializer
+from django.contrib.auth import logout,login
+from django.contrib.auth import authenticate
+from .serializers import PostSerializer,KomentarzSerializer,UserSerializer,RegistrationSerializer,LoginSerializer,ProfileSerializer
 
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework import viewsets,mixins
 
-from django.contrib.auth import logout,login
-
-from django.contrib.auth import authenticate
 # Create your views here.
 
 class PostViewSet(viewsets.ModelViewSet):
     """
-        API endpoint dla wszystkich postów (od najnowszych)
+        API endpoint dla postów (od najnowszych)
+        /<int:pk>/komentarze/ - wszystkie kometarze do posta (od najnowszych)
     """
     queryset = Post.objects.all().order_by("-data_utworzenia")
     serializer_class = PostSerializer
@@ -35,7 +34,7 @@ class PostViewSet(viewsets.ModelViewSet):
 
 class KometarzeViewSet(viewsets.ModelViewSet):
     """
-        API endpoint dla wszystkich komentarzy
+        API endpoint dla komentarzy
     """
     queryset = Komentarz.objects.all()
     serializer_class = KomentarzSerializer
@@ -60,34 +59,27 @@ class KometarzeViewSet(viewsets.ModelViewSet):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class UserViewSet(viewsets.ModelViewSet):
+class UserViewSet(  mixins.RetrieveModelMixin,
+                    mixins.UpdateModelMixin,
+                    mixins.DestroyModelMixin,
+                    mixins.ListModelMixin,
+                    viewsets.GenericViewSet):
     """
-            API endpoint dla user. user/<int:id> /login /logout /register
+            API endpoints
+             user/<int:id> - szczegóły user
+             user/<int:id>/profile - zmiana zdjecia profilowego
+             user/<int:id>/posty - wszystkie posty użytkownika (od najnowszych)
+             /login
+             /logout
+             /register
         """
     serializer_class = UserSerializer
     queryset = User.objects.all()
 
 
     def list(self,request):
-        return Response( {"Podaj id usera lub wybierz opcje /login /logout /register"},status=status.HTTP_200_OK)
 
-    # def update(self, request, *args, **kwargs):
-    #     instance = self.get_object()
-    #     serializer = UserSerializer(instance,data=request.data,partial=True)
-    #     serializer.is_valid(raise_exception=True)
-    #     serializer.save()
-        # instance = self.get_object()
-        # print(request.FILES)
-        # instance.profile.image = request.FILES.get('image')
-        # instance.save()
-
-
-    # def retrieve(self, request, pk=None):
-    #
-    #     user = get_object_or_404(User, pk=pk)
-    #     serializer = UserSerializer(user,context={"request": request})
-    #     return Response(serializer.data,status=status.HTTP_200_OK)
-
+        return Response( {"Wybierz jedną z opcji "},status=status.HTTP_200_OK)
 
 
     @action(detail=False, methods=['post'])
@@ -102,7 +94,6 @@ class UserViewSet(viewsets.ModelViewSet):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-
     @action(detail=False, methods=['get'])
     def logout(self,request):
         logout(request)
@@ -113,7 +104,6 @@ class UserViewSet(viewsets.ModelViewSet):
 
         serializer = LoginSerializer(data=request.data)
 
-
         authenticated = authenticate(username=serializer.initial_data['username'],password=serializer.initial_data['password'])
 
         if authenticated:
@@ -123,11 +113,31 @@ class UserViewSet(viewsets.ModelViewSet):
 
         return Response({'error' : "złe dane"}, status=status.HTTP_401_UNAUTHORIZED)
 
+    @action(detail=True, methods=['get','put'])
+    def profile(self,request,pk=None):
+        profile = get_object_or_404(User.objects.select_related('profile'), pk=pk).profile
+        if request.method == 'GET':
+
+            serializer = ProfileSerializer(profile)
+
+            return Response(serializer.data,status=status.HTTP_200_OK)
+
+        else:
+            serializer = ProfileSerializer(data=request.data)
+            if serializer.is_valid():
+
+                serializer.update(profile,serializer.validated_data)
+                return Response({'success':'obrazek został zmieniony'}, status=status.HTTP_202_ACCEPTED)
+            else:
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=True, methods=['get'])
+    def posty(self, request, pk=None):
+
+        user = get_object_or_404(User.objects.prefetch_related('post_set'), pk=pk)
 
 
+        serializer = PostSerializer(user.post_set.order_by('-data_utworzenia'),many=True)
 
-
-
-
-
+        return Response(serializer.data,status=status.HTTP_200_OK)
 
