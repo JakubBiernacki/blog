@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 from PIL import Image, ImageOps
+import os
 # Create your models here.
 
 class Post(models.Model):
@@ -12,6 +13,23 @@ class Post(models.Model):
 
     def __str__(self):
         return self.tytul
+
+    def save(self,*args, **kwargs):
+        try:
+            old_image = Post.objects.get(pk=self.pk).zdjecia
+        except:
+            old_image = False
+        super().save(*args, **kwargs)
+
+        if old_image:
+
+            try:
+                if old_image.url != self.zdjecia.url:
+                    os.remove(old_image.path)
+            except ValueError:
+                os.remove(old_image.path)
+
+
 
 class Komentarz(models.Model):
     post = models.ForeignKey(Post,on_delete=models.CASCADE)
@@ -41,6 +59,11 @@ class Profile(models.Model):
         return f'{self.user.username} Profile'
 
     def save(self, *args, **kwargs):
+        try:
+            old_image = Profile.objects.get(pk=self.pk).image
+        except:
+            old_image = False
+
         super().save(*args, **kwargs)
         if self.image:
 
@@ -70,3 +93,7 @@ class Profile(models.Model):
                         img = img.crop((left, top, right, bottom))
 
                 img.save(self.image.path)
+        if old_image:
+
+            if old_image.url != '/media/profile_img/default.png':
+                os.remove(old_image.path)

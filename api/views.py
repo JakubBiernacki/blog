@@ -115,6 +115,7 @@ class UserViewSet(  mixins.RetrieveModelMixin,
 
     @action(detail=True, methods=['get','put'])
     def profile(self,request,pk=None):
+        self.serializer_class = ProfileSerializer
         profile = get_object_or_404(User.objects.select_related('profile'), pk=pk).profile
         if request.method == 'GET':
 
