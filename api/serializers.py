@@ -3,15 +3,34 @@ from .models import Post,Komentarz,Profile
 from django.contrib.auth.models import User
 
 class PostSerializer(serializers.ModelSerializer):
+
+    user = serializers.PrimaryKeyRelatedField(read_only=True,default=serializers.CurrentUserDefault())
+
     class Meta:
         model = Post
         fields = '__all__'
 
 
+
 class KomentarzSerializer(serializers.ModelSerializer):
+    user = serializers.PrimaryKeyRelatedField(read_only=True, default=serializers.CurrentUserDefault())
+
     class Meta:
         model = Komentarz
         fields = '__all__'
+
+    def save(self, **kwargs):
+        if rodzic := self.validated_data['rodzic']:
+            print(rodzic)
+            if rodzic.post == self.validated_data['post']:
+                super(KomentarzSerializer,self).save(**kwargs)
+            else:
+                raise serializers.ValidationError({'rodzic': 'Nieprawidłowy rodzic'})
+        else:
+            super(KomentarzSerializer,self).save(**kwargs)
+
+
+
 
 class ProfileSerializer(serializers.ModelSerializer):
     class Meta:

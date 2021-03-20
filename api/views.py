@@ -1,10 +1,11 @@
 from django.shortcuts import get_object_or_404
-#API
-
 from .models import Post,Komentarz
 from django.contrib.auth.models import User
+
 from django.contrib.auth import logout,login
 from django.contrib.auth import authenticate
+#API
+
 from .serializers import PostSerializer,KomentarzSerializer,UserSerializer,RegistrationSerializer,LoginSerializer,ProfileSerializer
 
 from rest_framework.decorators import action
@@ -12,7 +13,12 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework import viewsets,mixins
 
-# Create your views here.
+from rest_framework.authentication import SessionAuthentication
+from rest_framework.permissions import AllowAny
+from .permissions import IsOwnerUser,IsOwnerOrReadOnly
+
+
+
 
 class PostViewSet(viewsets.ModelViewSet):
     """
@@ -21,6 +27,12 @@ class PostViewSet(viewsets.ModelViewSet):
     """
     queryset = Post.objects.all().order_by("-data_utworzenia")
     serializer_class = PostSerializer
+
+    authentication_classes = [SessionAuthentication]
+    permission_classes = [IsOwnerOrReadOnly]
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
 
     @action(detail=True, methods=['get'])
     def komentarze(self,request,pk=None,*args,**kwars):
@@ -39,24 +51,12 @@ class KometarzeViewSet(viewsets.ModelViewSet):
     queryset = Komentarz.objects.all()
     serializer_class = KomentarzSerializer
 
-    def create(self, request):
-        serializer = self.serializer_class(data=request.data)
-        if serializer.is_valid():
-            rodzic = serializer.validated_data['rodzic']
+    authentication_classes = [SessionAuthentication]
+    permission_classes = [IsOwnerOrReadOnly]
 
-            if rodzic:
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
 
-                if rodzic.post == serializer.validated_data['post']:
-                    serializer.save()
-                    return Response(serializer.data, status=status.HTTP_201_CREATED)
-                else:
-                    return Response({"Błąd":"Nieprawidłowy rodzic"}, status=status.HTTP_409_CONFLICT)
-
-
-            else:
-                serializer.save()
-                return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class UserViewSet(  mixins.RetrieveModelMixin,
@@ -76,6 +76,15 @@ class UserViewSet(  mixins.RetrieveModelMixin,
     serializer_class = UserSerializer
     queryset = User.objects.all()
 
+    authentication_classes = [SessionAuthentication]
+    # permission_classes = [IsOwnerUser]
+
+    def get_permissions(self):
+        if self.action in ('login','logout','register'):
+            permission_classes = [AllowAny]
+        else:
+            permission_classes = [IsOwnerUser]
+        return [permission() for permission in permission_classes]
 
     def list(self,request):
 
@@ -96,6 +105,7 @@ class UserViewSet(  mixins.RetrieveModelMixin,
 
     @action(detail=False, methods=['get'])
     def logout(self,request):
+
         logout(request)
         return Response({'success':"zostałeś wylogowany"},status=status.HTTP_200_OK)
 
@@ -113,13 +123,23 @@ class UserViewSet(  mixins.RetrieveModelMixin,
 
         return Response({'error' : "złe dane"}, status=status.HTTP_401_UNAUTHORIZED)
 
+
     @action(detail=True, methods=['get','put'])
     def profile(self,request,pk=None):
+
         self.serializer_class = ProfileSerializer
-        profile = get_object_or_404(User.objects.select_related('profile'), pk=pk).profile
+        user = get_object_or_404(User.objects.select_related('profile'), pk=pk)
+
+
+        if request.user != user:
+            return Response({'detail':'Brak dostępu do tego profilu'},status=status.HTTP_403_FORBIDDEN)
+
+
+
+
         if request.method == 'GET':
 
-            serializer = ProfileSerializer(profile)
+            serializer = ProfileSerializer(user.profile)
 
             return Response(serializer.data,status=status.HTTP_200_OK)
 
@@ -127,7 +147,7 @@ class UserViewSet(  mixins.RetrieveModelMixin,
             serializer = ProfileSerializer(data=request.data)
             if serializer.is_valid():
 
-                serializer.update(profile,serializer.validated_data)
+                serializer.update(user.profile,serializer.validated_data)
                 return Response({'success':'obrazek został zmieniony'}, status=status.HTTP_202_ACCEPTED)
             else:
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

@@ -38,6 +38,8 @@ class Komentarz(models.Model):
     tresc = models.TextField(blank=False)
     data_utworzenia = models.DateTimeField(auto_now_add=True)
 
+
+
     def __str__(self):
         return self.tresc
 
@@ -46,7 +48,7 @@ class Komentarz(models.Model):
             if self.rodzic.post == self.post:
                 super(Komentarz,self).save(*args, **kwargs)
             else:
-                return False
+                raise ValueError("Błędny rodzic")
         else:
             super(Komentarz, self).save(*args, **kwargs)
 
@@ -96,4 +98,7 @@ class Profile(models.Model):
         if old_image:
 
             if old_image.url != '/media/profile_img/default.png':
-                os.remove(old_image.path)
+                try:
+                    os.remove(old_image.path)
+                except FileNotFoundError:
+                    pass
