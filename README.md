@@ -14,7 +14,7 @@ $ env/Scripts/activate
 
 1. Użyj menadżer pakietów [pip](https://pip.pypa.io/en/stable/) żeby zainstalować `django` i `django-rest-framework`.
 ```bash
-$ pip install django djangorestframework Pillow
+$ pip install django djangorestframework
 ```
 2. Pobierz projekt i przejdź do katalogu frontend a następnie zainstaluj niezbędne paczki
 ```bash
