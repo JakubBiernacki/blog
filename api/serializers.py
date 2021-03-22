@@ -19,16 +19,13 @@ class KomentarzSerializer(serializers.ModelSerializer):
         model = Komentarz
         fields = '__all__'
 
-    def save(self, **kwargs):
-        if rodzic := self.validated_data['rodzic']:
-            print(rodzic)
-            if rodzic.post == self.validated_data['post']:
-                super(KomentarzSerializer,self).save(**kwargs)
-            else:
-                raise serializers.ValidationError({'rodzic': 'Nieprawidłowy rodzic'})
-        else:
-            super(KomentarzSerializer,self).save(**kwargs)
 
+    def validate(self,data):
+        if data['rodzic']:
+            if data['post']== data['rodzic'].post:
+                return data
+            raise serializers.ValidationError({'błędny rodzic': 'Nieprawidłowy rodzic'})
+        return data
 
 
 
