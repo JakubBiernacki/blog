@@ -123,6 +123,14 @@ class UserViewSet(  mixins.RetrieveModelMixin,
 
         return Response({'error' : "złe dane"}, status=status.HTTP_401_UNAUTHORIZED)
 
+    @action(detail=False, methods=['get'])
+    def logged(self, requset):
+        if requset.user.id:
+            serializer = UserSerializer(requset.user)
+
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response({'błąd': "Nie jesteś zalogowany"}, status=status.HTTP_400_BAD_REQUEST)
+
 
     @action(detail=True, methods=['get','put'])
     def profile(self,request,pk=None):
@@ -151,6 +159,9 @@ class UserViewSet(  mixins.RetrieveModelMixin,
                 return Response({'success':'obrazek został zmieniony'}, status=status.HTTP_202_ACCEPTED)
             else:
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+
 
     @action(detail=True, methods=['get'])
     def posty(self, request, pk=None):
