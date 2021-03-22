@@ -7,6 +7,7 @@ router = routers.DefaultRouter()
 
 router.register('posty',views.PostViewSet)
 router.register('kometarze',views.KometarzeViewSet)
+router.register('user',views.UserViewSet)
 
 urlpatterns = [
     path('', include(router.urls)),

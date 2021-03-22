@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import *
+from .models import Post,Komentarz,Profile
 # Register your models here.
 
 @admin.register(Post)
@@ -14,3 +14,8 @@ class KomentarzAdmin(admin.ModelAdmin):
     list_filter = ['post']
 
     search_fields = ['tresc']
+
+
+@admin.register(Profile)
+class ProfileAdmin(admin.ModelAdmin):
+    list_display = ['id','user','image']
