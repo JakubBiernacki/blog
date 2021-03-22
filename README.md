@@ -1,7 +1,7 @@
 # Blog
 Prosty blog z możliwością dodawania postów oraz komentowaniem ich.
 ## Wymagania
-- Python (3.6, 3.7, 3.8, 3.9)
+- Python (3.8, 3.9)
 - node.js
 - npm
 ## Instalacja
