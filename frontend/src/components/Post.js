@@ -1,6 +1,6 @@
 import React from 'react';
 import { paths } from '../constants';
-import { Avatar, Card } from 'antd';
+import { Avatar, Card, Empty } from 'antd';
 import dayjs from 'dayjs';
 import { Link } from 'react-router-dom';
 
@@ -12,7 +12,7 @@ const Post = ({ post, clickable = true }) => {
   const content = (
     <Card
       style={{ width: '100%' }}
-      cover={<img alt={tytul} src={zdjecia} />}
+      cover={zdjecia ? <img alt={tytul} src={zdjecia} /> : <Empty style={{ padding: 24 }} description="Brak zdjęcia" />}
       hoverable={clickable}
     >
       <Meta
