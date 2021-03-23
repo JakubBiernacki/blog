@@ -28,7 +28,7 @@ export const getSinglePost = async (id) => {
 
   post.user = await standardFetch(api.users.single(post.user));
 
-  await Promise.all(comments.map(async (comment) => ({
+  comments = await Promise.all(comments.map(async (comment) => ({
     ...comment,
     user: await standardFetch(api.users.single(comment.user)),
   })));
